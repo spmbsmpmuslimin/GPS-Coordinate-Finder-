@@ -1,363 +1,172 @@
-<!DOCTYPE html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GPS Coordinate Finder - Sekolah</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-100 min-h-screen p-8">
-    <div class="max-w-4xl mx-auto">
-      <div class="bg-white rounded-xl shadow-lg p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">
-          🗺️ GPS Coordinate Finder
+import React, { useState, useEffect } from 'react'; import { Download } from
+'lucide-react'; export default function QRCodeGenerator() { const [qrCodeUrl,
+setQrCodeUrl] = useState(''); const [url, setUrl] =
+useState('https://gps-coordinate-finder.vercel.app/'); const [logoText,
+setLogoText] = useState('SMP MUSLIMIN'); const [size, setSize] = useState(400);
+useEffect(() => { generateQRCode(); }, [url, logoText, size]); const
+generateQRCode = () => { // Using QR Server API with custom styling const qrUrl
+=
+`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}&format=svg`;
+setQrCodeUrl(qrUrl); }; const downloadQRCode = () => { const canvas =
+document.createElement('canvas'); const ctx = canvas.getContext('2d');
+canvas.width = size; canvas.height = size; // Create image from QR code const
+img = new Image(); img.crossOrigin = 'anonymous'; // Use PNG format for download
+const qrPngUrl =
+`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}&format=png`;
+img.onload = () => { // Draw QR code ctx.drawImage(img, 0, 0, size, size); //
+Draw white rounded rectangle in center for logo const centerSize = size * 0.25;
+const centerX = (size - centerSize) / 2; const centerY = (size - centerSize) /
+2; const cornerRadius = 15; ctx.fillStyle = 'white'; ctx.strokeStyle =
+'#1e40af'; ctx.lineWidth = 4; // Rounded rectangle ctx.beginPath();
+ctx.moveTo(centerX + cornerRadius, centerY); ctx.lineTo(centerX + centerSize -
+cornerRadius, centerY); ctx.quadraticCurveTo(centerX + centerSize, centerY,
+centerX + centerSize, centerY + cornerRadius); ctx.lineTo(centerX + centerSize,
+centerY + centerSize - cornerRadius); ctx.quadraticCurveTo(centerX + centerSize,
+centerY + centerSize, centerX + centerSize - cornerRadius, centerY +
+centerSize); ctx.lineTo(centerX + cornerRadius, centerY + centerSize);
+ctx.quadraticCurveTo(centerX, centerY + centerSize, centerX, centerY +
+centerSize - cornerRadius); ctx.lineTo(centerX, centerY + cornerRadius);
+ctx.quadraticCurveTo(centerX, centerY, centerX + cornerRadius, centerY);
+ctx.closePath(); ctx.fill(); ctx.stroke(); // Draw text ctx.fillStyle =
+'#1e40af'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; // Split text
+into two lines const words = logoText.split(' '); const fontSize = centerSize /
+5; ctx.font = `bold ${fontSize}px Arial`; if (words.length === 2) {
+ctx.fillText(words[0], size / 2, size / 2 - fontSize / 2);
+ctx.fillText(words[1], size / 2, size / 2 + fontSize / 2); } else {
+ctx.fillText(logoText, size / 2, size / 2); } // Download canvas.toBlob((blob)
+=> { const url = URL.createObjectURL(blob); const a =
+document.createElement('a'); a.href = url; a.download =
+`QR-Code-${logoText.replace(/\s+/g, '-')}.png`; document.body.appendChild(a);
+a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }); };
+img.src = qrPngUrl; }; return (
+<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+  <div className="max-w-4xl mx-auto">
+    <div className="bg-white rounded-2xl shadow-2xl p-8">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          📱 QR Code Generator
         </h1>
-        <p class="text-gray-600 mb-6">
-          Tool untuk mendapatkan koordinat GPS sekolah dengan akurat
+        <p className="text-gray-600">
+          Generate QR Code dengan logo custom untuk sekolah
         </p>
+      </div>
 
-        <!-- Current Location -->
-        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-6">
-          <h2
-            class="text-xl font-semibold text-blue-900 mb-4 flex items-center gap-2">
-            📍 Lokasi Anda Saat Ini
-          </h2>
-
-          <div class="flex gap-3 mb-4">
-            <button
-              id="getLocation"
-              class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all">
-              🎯 Ambil 5 Readings (Accurate)
-            </button>
-            <button
-              id="getLocationFast"
-              class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all">
-              ⚡ Quick Single Reading
-            </button>
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Settings Panel */}
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              🔗 URL Tujuan
+            </label>
+            <input type="text" value={url} onChange={(e) =>
+            setUrl(e.target.value)} className="w-full px-4 py-3 border-2
+            border-gray-300 rounded-lg focus:outline-none focus:ring-2
+            focus:ring-blue-500 focus:border-transparent"
+            placeholder="https://example.com" />
           </div>
 
-          <div id="currentLocation" class="hidden">
-            <div class="bg-white p-4 rounded-lg space-y-3">
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700 font-medium">Latitude:</span>
-                <span id="currentLat" class="text-gray-900 font-mono text-lg"
-                  >-</span
-                >
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700 font-medium">Longitude:</span>
-                <span id="currentLng" class="text-gray-900 font-mono text-lg"
-                  >-</span
-                >
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700 font-medium">Akurasi:</span>
-                <span id="currentAcc" class="text-gray-900">-</span>
-              </div>
-              <button
-                id="openMaps"
-                class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all">
-                📍 Buka di Google Maps
-              </button>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              ✏️ Teks Logo (Max 2 kata)
+            </label>
+            <input type="text" value={logoText} onChange={(e) =>
+            setLogoText(e.target.value)} className="w-full px-4 py-3 border-2
+            border-gray-300 rounded-lg focus:outline-none focus:ring-2
+            focus:ring-blue-500 focus:border-transparent" placeholder="SMP
+            MUSLIMIN" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              📏 Ukuran: {size}x{size} px
+            </label>
+            <input type="range" min="300" max="800" step="50" value={size}
+            onChange={(e) => setSize(parseInt(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none
+            cursor-pointer" />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>300px</span>
+              <span>800px</span>
             </div>
           </div>
-        </div>
 
-        <!-- Code Generator -->
-        <div
-          class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg mb-6 hidden"
-          id="codeBlock">
-          <h2 class="text-xl font-semibold text-green-900 mb-4">
-            ✅ Code untuk LocationValidator.js
-          </h2>
-          <pre
-            class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto"><code id="generatedCode">// Paste code ini ke LocationValidator.js</code></pre>
           <button
-            id="copyCode"
-            class="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-all">
-            📋 Copy Code
+            onClick="{downloadQRCode}"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+            <Download size="{24}" />
+            Download QR Code
           </button>
-        </div>
 
-        <!-- Manual Input -->
-        <div class="bg-gray-50 border border-gray-300 p-6 rounded-lg">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">
-            🔧 Atau Input Manual dari Google Maps
-          </h2>
-          <p class="text-sm text-gray-600 mb-4">
-            1. Buka Google Maps<br />
-            2. Cari lokasi sekolah<br />
-            3. Klik kanan → "What's here?"<br />
-            4. Copy koordinat yang muncul (contoh: -6.914744, 107.609810)<br />
-            5. Paste di bawah:
-          </p>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Latitude</label
-              >
-              <input
-                type="text"
-                id="manualLat"
-                placeholder="-6.914744"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Longitude</label
-              >
-              <input
-                type="text"
-                id="manualLng"
-                placeholder="107.609810"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
+          <div
+            className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              <strong>💡 Tips:</strong> QR Code dengan logo di tengah tetap bisa
+              di-scan karena memiliki error correction!
+            </p>
           </div>
-          <button
-            id="generateManual"
-            class="mt-4 w-full bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold transition-all">
-            Generate Code dari Input Manual
-          </button>
         </div>
 
-        <!-- Info -->
-        <div
-          class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mt-6">
-          <p class="text-sm text-yellow-800">
-            <strong>💡 Tips:</strong> Untuk akurasi terbaik, ambil koordinat GPS
-            saat Anda berada di tengah-tengah area sekolah (lapangan/halaman
-            utama).
-          </p>
+        {/* Preview Panel */}
+        <div className="flex flex-col items-center justify-center">
+          <div
+            className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-2xl shadow-inner">
+            <div className="bg-white p-4 rounded-xl shadow-lg relative">
+              {qrCodeUrl && (
+              <img src="{qrCodeUrl}" alt="QR Code" className="w-full h-auto" />
+              )} {/* Logo overlay simulation */}
+              <div
+                className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div
+                  className="bg-white border-4 border-blue-700 rounded-xl px-4 py-3 shadow-lg">
+                  <div className="text-center">
+                    {logoText.split(' ').map((word, idx) => (
+                    <div
+                      key="{idx}"
+                      className="text-blue-700 font-bold text-xs md:text-sm">
+                      {word}
+                    </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-center text-gray-600 mt-4 text-sm font-medium">
+              Preview QR Code
+            </p>
+          </div>
+
+          <div
+            className="mt-6 bg-blue-50 border border-blue-200 p-4 rounded-lg w-full">
+            <p className="text-xs text-blue-800 text-center">
+              <strong>📱 Scan untuk test:</strong><br />
+              Arahkan ke: {url.substring(0, 40)}...
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Instructions */}
+      <div
+        className="mt-8 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-6 rounded-lg">
+        <h3 className="font-bold text-green-900 mb-3 text-lg">
+          📋 Cara Menggunakan:
+        </h3>
+        <ol className="space-y-2 text-sm text-green-800">
+          <li>
+            1. Masukkan URL tujuan (sudah terisi dengan link GPS Coordinate
+            Finder)
+          </li>
+          <li>
+            2. Edit teks logo sesuai keinginan (max 2 kata untuk hasil terbaik)
+          </li>
+          <li>3. Atur ukuran QR code sesuai kebutuhan</li>
+          <li>4. Klik tombol "Download QR Code" untuk download</li>
+          <li>5. QR Code siap dicetak atau dibagikan! 🎉</li>
+        </ol>
+      </div>
     </div>
-
-    <script>
-      let currentCoords = null;
-      let readings = [];
-      let readingCount = 0;
-      const MAX_READINGS = 5; // Ambil 5 readings untuk balance speed vs accuracy
-
-      // Get current location with multiple readings
-      document
-        .getElementById("getLocation")
-        .addEventListener("click", function () {
-          this.innerHTML =
-            '<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white inline-block"></div> Mengambil 5 readings GPS...';
-          this.disabled = true;
-
-          readings = [];
-          readingCount = 0;
-
-          collectMultipleReadings();
-        });
-
-      function collectMultipleReadings() {
-        const watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            readingCount++;
-            readings.push({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-            });
-
-            // Update progress
-            document.getElementById(
-              "getLocation"
-            ).innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white inline-block"></div> Reading ${readingCount}/${MAX_READINGS}...`;
-
-            if (readingCount >= MAX_READINGS) {
-              navigator.geolocation.clearWatch(watchId);
-              calculateAverageCoords();
-            }
-          },
-          (error) => {
-            navigator.geolocation.clearWatch(watchId);
-            alert("❌ Gagal mendapatkan lokasi: " + error.message);
-            document.getElementById("getLocation").textContent =
-              "Dapatkan Koordinat GPS Saya";
-            document.getElementById("getLocation").disabled = false;
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-          }
-        );
-      }
-
-      function calculateAverageCoords() {
-        // Calculate average
-        const avgLat =
-          readings.reduce((sum, r) => sum + r.lat, 0) / readings.length;
-        const avgLng =
-          readings.reduce((sum, r) => sum + r.lng, 0) / readings.length;
-        const avgAccuracy =
-          readings.reduce((sum, r) => sum + r.accuracy, 0) / readings.length;
-
-        // Calculate standard deviation for quality indication
-        const latStdDev = Math.sqrt(
-          readings.reduce((sum, r) => sum + Math.pow(r.lat - avgLat, 2), 0) /
-            readings.length
-        );
-        const lngStdDev = Math.sqrt(
-          readings.reduce((sum, r) => sum + Math.pow(r.lng - avgLng, 2), 0) /
-            readings.length
-        );
-
-        const maxDeviation = Math.max(latStdDev, lngStdDev) * 111000; // Convert to meters
-
-        currentCoords = {
-          lat: avgLat,
-          lng: avgLng,
-          accuracy: avgAccuracy,
-          deviation: maxDeviation,
-          readings: readings.length,
-        };
-
-        // Display results
-        document.getElementById("currentLat").textContent =
-          currentCoords.lat.toFixed(6);
-        document.getElementById("currentLng").textContent =
-          currentCoords.lng.toFixed(6);
-        document.getElementById("currentAcc").innerHTML = `
-                ±${Math.round(currentCoords.accuracy)}m
-                <br><span class="text-xs text-gray-500">Deviation: ±${Math.round(
-                  currentCoords.deviation
-                )}m dari ${readings.length} readings</span>
-            `;
-
-        document.getElementById("currentLocation").classList.remove("hidden");
-        document.getElementById("codeBlock").classList.remove("hidden");
-
-        // Show quality indicator
-        let quality = "";
-        if (currentCoords.deviation < 5) {
-          quality =
-            '<span class="text-green-600 font-semibold">✅ Excellent Quality</span>';
-        } else if (currentCoords.deviation < 10) {
-          quality =
-            '<span class="text-blue-600 font-semibold">✅ Good Quality</span>';
-        } else if (currentCoords.deviation < 20) {
-          quality =
-            '<span class="text-yellow-600 font-semibold">⚠️ Fair Quality</span>';
-        } else {
-          quality =
-            '<span class="text-red-600 font-semibold">❌ Poor Quality - Try again outdoors</span>';
-        }
-
-        document.getElementById("currentAcc").innerHTML += `<br>${quality}`;
-
-        generateCode(currentCoords.lat, currentCoords.lng);
-
-        document.getElementById("getLocation").textContent =
-          "✅ Koordinat Berhasil Didapat (5 readings averaged)";
-        document.getElementById("getLocation").disabled = false;
-      }
-
-      // Fast single reading
-      document
-        .getElementById("getLocationFast")
-        .addEventListener("click", function () {
-          this.innerHTML =
-            '<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white inline-block"></div> Getting GPS...';
-          this.disabled = true;
-
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              currentCoords = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-                accuracy: position.coords.accuracy,
-                readings: 1,
-              };
-
-              document.getElementById("currentLat").textContent =
-                currentCoords.lat.toFixed(6);
-              document.getElementById("currentLng").textContent =
-                currentCoords.lng.toFixed(6);
-              document.getElementById("currentAcc").innerHTML = `±${Math.round(
-                currentCoords.accuracy
-              )}m<br><span class="text-xs text-yellow-600">⚡ Single reading - untuk hasil lebih akurat gunakan "5 Readings"</span>`;
-
-              document
-                .getElementById("currentLocation")
-                .classList.remove("hidden");
-              document.getElementById("codeBlock").classList.remove("hidden");
-
-              generateCode(currentCoords.lat, currentCoords.lng);
-
-              this.textContent = "✅ Quick Reading Done";
-              this.disabled = false;
-            },
-            (error) => {
-              alert("❌ Gagal mendapatkan lokasi: " + error.message);
-              this.textContent = "⚡ Quick Single Reading";
-              this.disabled = false;
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-          );
-        });
-
-      // Open Google Maps
-      document
-        .getElementById("openMaps")
-        .addEventListener("click", function () {
-          if (currentCoords) {
-            window.open(
-              `https://www.google.com/maps?q=${currentCoords.lat},${currentCoords.lng}`,
-              "_blank"
-            );
-          }
-        });
-
-      // Generate code from manual input
-      document
-        .getElementById("generateManual")
-        .addEventListener("click", function () {
-          const lat = parseFloat(document.getElementById("manualLat").value);
-          const lng = parseFloat(document.getElementById("manualLng").value);
-
-          if (isNaN(lat) || isNaN(lng)) {
-            alert("❌ Koordinat tidak valid! Pastikan format angka benar.");
-            return;
-          }
-
-          generateCode(lat, lng);
-          document.getElementById("codeBlock").classList.remove("hidden");
-        });
-
-      // Generate code
-      function generateCode(lat, lng) {
-        const code = `const SCHOOL_COORDS = {
-  lat: ${lat.toFixed(6)},  // Koordinat sekolah
-  lng: ${lng.toFixed(6)}
-};
-
-const SCHOOL_RADIUS = 200; // 200 meter radius`;
-
-        document.getElementById("generatedCode").textContent = code;
-      }
-
-      // Copy code
-      document
-        .getElementById("copyCode")
-        .addEventListener("click", function () {
-          const code = document.getElementById("generatedCode").textContent;
-          navigator.clipboard.writeText(code).then(() => {
-            const btn = this;
-            const originalText = btn.textContent;
-            btn.textContent = "✅ Code Berhasil Di-copy!";
-            btn.classList.remove("bg-green-600", "hover:bg-green-700");
-            btn.classList.add("bg-green-800");
-            setTimeout(() => {
-              btn.textContent = originalText;
-              btn.classList.remove("bg-green-800");
-              btn.classList.add("bg-green-600", "hover:bg-green-700");
-            }, 2000);
-          });
-        });
-    </script>
-  </body>
-</html>
+  </div>
+</div>
+); }
